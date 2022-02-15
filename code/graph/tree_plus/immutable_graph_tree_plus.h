@@ -191,7 +191,7 @@ struct sym_immutable_graph_tree_plus {
       EL.map_elms(v, map_edges_f);
     };
     map_vertices(map_f);
-    mapt.next("Map all edges noop time");
+    //mapt.next("Map all edges noop time");
   }
 
   void iter_edges() {
@@ -211,7 +211,7 @@ struct sym_immutable_graph_tree_plus {
       assert(ctr == deg);
     };
     map_vertices(map_f);
-    mapt.next("Map all edges noop time");
+    //mapt.next("Map all edges noop time");
   }
 
   auto retrieve_edges() {
@@ -336,10 +336,10 @@ struct sym_immutable_graph_tree_plus {
 
     // Only apply integer sort if it will be work-efficient
     if (nn <= (m * pbbs::log2_up(m))) {
-      cout << "running integer sort: " << nn << " and mm = " << (m * pbbs::log2_up(m)) << endl;
+      //cout << "running integer sort: " << nn << " and mm = " << (m * pbbs::log2_up(m)) << endl;
       pbbs::integer_sort_inplace(E_orig, edge_to_long, bits);
     } else {
-      cout << "running sample sort" << endl;
+      //cout << "running sample sort" << endl;
       pbbs::sample_sort_inplace(E_orig, std::less<edge>());
     }
   }
@@ -355,7 +355,7 @@ struct sym_immutable_graph_tree_plus {
     edge* E_alloc = nullptr;
     auto fl = run_seq ? pbbs::fl_sequential : pbbs::no_flag;
     if (!sorted) {
-      cout << "insert, nn = " << nn << endl;
+      //cout << "insert, nn = " << nn << endl;
       sort_updates(edges, m, nn);
     }
 
@@ -428,7 +428,7 @@ struct sym_immutable_graph_tree_plus {
     auto fl = run_seq ? pbbs::fl_sequential : pbbs::no_flag;
 
     if (!sorted) {
-      cout << "delete, nn = " << nn << endl;
+      //cout << "delete, nn = " << nn << endl;
       sort_updates(edges, m, nn);
     }
 
