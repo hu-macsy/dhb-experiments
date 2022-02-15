@@ -1,5 +1,7 @@
 TARGETS=graph_bm_weighted graph_bm graph_bm_no_update test_graphcontainer test_btree test_pma
 
+TARGET_LIB = libterrace.so
+
 ifdef D
 	DEBUG=-g -DDEBUG_MODE
 	OPT=
@@ -19,9 +21,9 @@ ifdef P
 	PROFILE=-pg -no-pie # for bug in gprof.
 endif
 
-CXX = clang++ -std=c++17
-CC = clang -std=gnu11
-LD= clang++ -std=c++17
+CXX = g++ -std=c++17
+CC = gcc -std=gnu11
+LD= g++ -std=c++17
 
 LOC_INCLUDE=include
 LOC_LIB=lib
@@ -29,9 +31,9 @@ LOC_SRC=src
 OBJDIR=obj
 SER=ser
 
-CXXFLAGS += -Wall $(DEBUG) -g $(PROFILE) $(OPT) $(ARCH) -DOPENMP=$(OPENMP) -DCILK=$(CILK) -m64 -I. -I$(LOC_INCLUDE)
+CXXFLAGS += -fPIC -Wall $(DEBUG) -g $(PROFILE) $(OPT) $(ARCH) -DOPENMP=$(OPENMP) -DCILK=$(CILK) -m64 -I. -I$(LOC_INCLUDE)
 
-CFLAGS += -Wall $(DEBUG) $(PROFILE) $(OPT) $(ARCH) -DOPENMP=$(OPENMP) -DCILK=$(CILK) -m64 -I. -I$(LOC_INCLUDE)
+CFLAGS += -fPIC -Wall $(DEBUG) $(PROFILE) $(OPT) $(ARCH) -DOPENMP=$(OPENMP) -DCILK=$(CILK) -m64 -I. -I$(LOC_INCLUDE)
 
 LDFLAGS += $(DEBUG) $(PROFILE) $(OPT) -L$(LOC_LIB) -lm -lpthread -lssl -lcrypto 
 
@@ -51,7 +53,7 @@ endif
 ifeq ($(OPENMP),1)
   CFLAGS += -fopenmp
   CXXFLAGS += -fopenmp
-  LDFLAGS += -lomp
+  LDFLAGS += -fopenmp
 endif
 
 LDFLAGS +="-Wl,-rpath,lib/"
@@ -59,7 +61,7 @@ LDFLAGS +="-Wl,-rpath,lib/"
 # declaration of dependencies
 #
 
-all: graph_bm
+all: graph_bm $(TARGET_LIB)
 tests:	test_graphcontainer test_btree test_pma
 
 # dependencies between programs and .o files
@@ -150,6 +152,14 @@ $(OBJDIR)/%.o: $(LOC_SRC)/%.c | $(OBJDIR)
 $(OBJDIR)/%.o: $(LOC_SRC)/gqf/%.c | $(OBJDIR)
 	$(CXX) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
+OBJS := $(OBJDIR)/util.o \
+	$(OBJDIR)/PMA.o $(OBJDIR)/PMA_Lock.o \
+	$(OBJDIR)/partitioned_counter.o
+
+$(TARGET_LIB):  $(OBJS)
+	$(CXX) $(CFLAGS) $(OBJS) -o $@ -shared $(LDFLAGS)
+
+
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
@@ -157,4 +167,4 @@ $(SER):
 	@mkdir -p $(SER)
 
 clean:
-	rm -rf $(OBJDIR) core $(TARGETS)
+	rm -rf $(OBJDIR) core $(TARGETS) $(TARGET_LIB)

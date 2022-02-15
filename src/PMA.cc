@@ -2580,7 +2580,7 @@ void PMA::add_edge_batch_wrapper(pair_uint *es, uint64_t edge_count, int64_t thr
   if (true || edge_count < (uint64_t) threshold*2) {
     node_lock.lock_shared(0);
     uint64_t task_id = __sync_fetch_and_add(&next_task_id, 2*edge_count);
-    cilk_for (uint32_t i = 0; i < edge_count; i++) {
+    parallel_for (uint32_t i = 0; i < edge_count; i++) {
       uint32_t src = es[i].x;
       uint32_t dest = es[i].y;
       add_edge_update_fast(src,dest,1,task_id+2*i);
@@ -2785,7 +2785,7 @@ void PMA::remove_edge_batch_wrapper(pair_uint *es, uint64_t edge_count, int64_t 
   if (true || edge_count < (uint64_t) threshold*2) {
     node_lock.lock_shared(0);
     uint64_t task_id = __sync_fetch_and_add(&next_task_id, 2*edge_count);
-    cilk_for (uint32_t i = 0; i < edge_count; i++) {
+    parallel_for (uint32_t i = 0; i < edge_count; i++) {
       uint32_t src = es[i].x;
       uint32_t dest = es[i].y;
       remove_edge_fast(src,dest,task_id+2*i);

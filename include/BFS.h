@@ -27,11 +27,11 @@
 struct BFS_F {
   int32_t* Parents;
   BFS_F(int32_t* _Parents) : Parents(_Parents) {}
-  inline bool update (uint32_t s, uint32_t d) { //Update
+  inline bool update (uint32_t s, uint32_t d, uint32_t) { //Update
     if(Parents[d] == -1) { Parents[d] = s; return 1; }
     else return 0;
   }
-  inline bool updateAtomic (uint32_t s, uint32_t d){ //atomic version of Update
+  inline bool updateAtomic (uint32_t s, uint32_t d, uint32_t){ //atomic version of Update
     return __sync_bool_compare_and_swap(&Parents[d],-1,s);
   }
   //cond function checks if vertex has been visited yet
