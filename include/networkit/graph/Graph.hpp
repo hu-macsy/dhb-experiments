@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <numeric>
 #include <omp.h>
 #include <queue>
@@ -26,6 +27,8 @@
 #include <networkit/auxiliary/FunctionTraits.hpp>
 #include <networkit/auxiliary/Log.hpp>
 #include <networkit/auxiliary/Random.hpp>
+
+#include <dhb/dynamic_hashed_blocks.h>
 
 namespace NetworKit {
 
@@ -122,22 +125,8 @@ class Graph final {
     //!< exists[v] is true if node v has not been removed from the graph
     std::vector<bool> exists;
 
-    //!< only used for directed graphs, inEdges[v] contains all nodes u that
-    //!< have an edge (u, v)
-    std::vector<std::vector<node>> inEdges;
-    //!< (outgoing) edges, for each edge (u, v) v is saved in outEdges[u] and
-    //!< for undirected also u in outEdges[v]
-    std::vector<std::vector<node>> outEdges;
-
-    //!< only used for directed graphs, same schema as inEdges
-    std::vector<std::vector<edgeweight>> inEdgeWeights;
-    //!< same schema (and same order!) as outEdges
-    std::vector<std::vector<edgeweight>> outEdgeWeights;
-
-    //!< only used for directed graphs, same schema as inEdges
-    std::vector<std::vector<edgeid>> inEdgeIds;
-    //!< same schema (and same order!) as outEdges
-    std::vector<std::vector<edgeid>> outEdgeIds;
+    dhb::Matrix<dhb::EdgeData> outMatrix;
+    dhb::Matrix<dhb::EdgeData> inMatrix;
 
     /**
      * Returns the index of node u in the array of incoming edges of node v.
@@ -172,18 +161,7 @@ class Graph final {
      * is unweighted
      */
     template <bool hasWeights>
-    inline edgeweight getOutEdgeWeight(node u, index i) const;
-
-    /**
-     * Returns the edge weight of the incoming edge of index i in the incoming
-     * edges of node u
-     *
-     * @param u The node
-     * @param i The index in the incoming edge array
-     * @return The weight of the incoming edge
-     */
-    template <bool hasWeights>
-    inline edgeweight getInEdgeWeight(node u, index i) const;
+    inline edgeweight getOutEdgeWeight(node u, dhb::EdgeData t) const;
 
     /**
      * Returns the edge id of the edge of index i in the outgoing edges of node
@@ -194,30 +172,7 @@ class Graph final {
      * @return The edge id
      */
     template <bool graphHasEdgeIds>
-    inline edgeid getOutEdgeId(node u, index i) const;
-
-    /**
-     * Returns the edge id of the edge of index i in the incoming edges of node
-     * u
-     *
-     * @param u The node
-     * @param i The index in the incoming edges of u
-     * @return The edge id
-     */
-    template <bool graphHasEdgeIds>
-    inline edgeid getInEdgeId(node u, index i) const;
-
-    /**
-     * @brief Returns if the edge (u, v) shall be used in the iteration of all
-     * edgesIndexed
-     *
-     * @param u The source node of the edge
-     * @param v The target node of the edge
-     * @return If the node shall be used, i.e. if v is not none and in the
-     * undirected case if u >= v
-     */
-    template <bool graphIsDirected>
-    inline bool useEdgeInIteration(node u, node v) const;
+    inline edgeid getOutEdgeId(node u, dhb::EdgeData t) const;
 
     /**
      * @brief Implementation of the for loop for outgoing edges of u
@@ -532,7 +487,7 @@ public:
         index i;
 
         bool validEdge() const noexcept {
-            return G->isDirected() || (*nodeIter <= G->outEdges[*nodeIter][i]);
+            return G->isDirected() || (*nodeIter <= G->getIthNeighbor(*nodeIter, i));
         }
 
         void nextEdge() {
@@ -624,7 +579,7 @@ public:
 
         Edge operator*() const noexcept {
             assert(nodeIter != G->nodeRange().end());
-            return Edge(*nodeIter, G->outEdges[*nodeIter][i]);
+            return Edge(*nodeIter, G->getIthNeighbor(*nodeIter, i));
         }
 
         EdgeIterator &operator++() {
@@ -714,8 +669,8 @@ public:
 
         WeightedEdge operator*() const noexcept {
             assert(nodeIter != G->nodeRange().end());
-            return WeightedEdge(*nodeIter, G->outEdges[*nodeIter][i],
-                                G->isWeighted() ? G->outEdgeWeights[*nodeIter][i] : 1);
+            auto tuple = G->getIthNeighborWithWeight(*nodeIter, i);
+            return WeightedEdge(*nodeIter, std::get<0>(tuple), std::get<1>(tuple));
         }
     };
 
@@ -774,7 +729,7 @@ public:
      */
     class NeighborIterator {
 
-        std::vector<node>::const_iterator nIter;
+        dhb::Matrix<dhb::EdgeData>::ConstNeighborView::iterator nIter;
 
     public:
         // The value type of the neighbors (i.e. nodes). Returned by
@@ -797,7 +752,8 @@ public:
         // Own type.
         using self = NeighborIterator;
 
-        NeighborIterator(std::vector<node>::const_iterator nodesIter) : nIter(nodesIter) {}
+        NeighborIterator(dhb::Matrix<dhb::EdgeData>::ConstNeighborView::iterator iter)
+            : nIter(iter) {}
 
         /**
          * @brief WARNING: This contructor is required for Python and should not be used as the
@@ -831,7 +787,7 @@ public:
 
         bool operator!=(const NeighborIterator &rhs) const { return !(nIter == rhs.nIter); }
 
-        node operator*() const { return *nIter; }
+        node operator*() const { return nIter->vertex(); }
     };
 
     /**
@@ -840,8 +796,7 @@ public:
      */
     class NeighborWeightIterator {
 
-        std::vector<node>::const_iterator nIter;
-        std::vector<edgeweight>::const_iterator wIter;
+        dhb::Matrix<dhb::EdgeData>::ConstNeighborView::iterator nIter;
 
     public:
         // The value type of the neighbors (i.e. nodes). Returned by
@@ -864,9 +819,8 @@ public:
         // Own type.
         using self = NeighborWeightIterator;
 
-        NeighborWeightIterator(std::vector<node>::const_iterator nodesIter,
-                               std::vector<edgeweight>::const_iterator weightIter)
-            : nIter(nodesIter), wIter(weightIter) {}
+        NeighborWeightIterator(dhb::Matrix<dhb::EdgeData>::ConstNeighborView::iterator iter)
+            : nIter(iter) {}
 
         /**
          * @brief WARNING: This contructor is required for Python and should not be used as the
@@ -876,7 +830,6 @@ public:
 
         NeighborWeightIterator &operator++() {
             ++nIter;
-            ++wIter;
             return *this;
         }
 
@@ -888,7 +841,6 @@ public:
 
         NeighborWeightIterator operator--() {
             --nIter;
-            --wIter;
             return *this;
         }
 
@@ -898,13 +850,13 @@ public:
             return tmp;
         }
 
-        bool operator==(const NeighborWeightIterator &rhs) const {
-            return nIter == rhs.nIter && wIter == rhs.wIter;
-        }
+        bool operator==(const NeighborWeightIterator &rhs) const { return nIter == rhs.nIter; }
 
         bool operator!=(const NeighborWeightIterator &rhs) const { return !(*this == rhs); }
 
-        std::pair<node, edgeweight> operator*() const { return std::make_pair(*nIter, *wIter); }
+        std::pair<node, edgeweight> operator*() const {
+            return std::make_pair(nIter->vertex(), nIter->data().weight);
+        }
     };
 
     /**
@@ -923,14 +875,14 @@ public:
 
         NeighborIterator begin() const {
             assert(G);
-            return InEdges ? NeighborIterator(G->inEdges[u].begin())
-                           : NeighborIterator(G->outEdges[u].begin());
+            return InEdges ? NeighborIterator(G->inMatrix.neighbors(u).begin())
+                           : NeighborIterator(G->outMatrix.neighbors(u).begin());
         }
 
         NeighborIterator end() const {
             assert(G);
-            return InEdges ? NeighborIterator(G->inEdges[u].end())
-                           : NeighborIterator(G->outEdges[u].end());
+            return InEdges ? NeighborIterator(G->inMatrix.neighbors(u).end())
+                           : NeighborIterator(G->outMatrix.neighbors(u).end());
         }
     };
 
@@ -954,18 +906,13 @@ public:
         NeighborWeightRange() : G(nullptr){};
 
         NeighborWeightIterator begin() const {
-            assert(G);
-            return InEdges
-                       ? NeighborWeightIterator(G->inEdges[u].begin(), G->inEdgeWeights[u].begin())
-                       : NeighborWeightIterator(G->outEdges[u].begin(),
-                                                G->outEdgeWeights[u].begin());
+            return InEdges ? NeighborWeightIterator(G->inMatrix.neighbors(u).begin())
+                           : NeighborWeightIterator(G->outMatrix.neighbors(u).begin());
         }
 
         NeighborWeightIterator end() const {
-            assert(G);
-            return InEdges
-                       ? NeighborWeightIterator(G->inEdges[u].end(), G->inEdgeWeights[u].end())
-                       : NeighborWeightIterator(G->outEdges[u].end(), G->outEdgeWeights[u].end());
+            return InEdges ? NeighborWeightIterator(G->inMatrix.neighbors(u).end())
+                           : NeighborWeightIterator(G->outMatrix.neighbors(u).end());
         }
     };
 
@@ -1167,13 +1114,8 @@ public:
      */
     void removePartialOutEdges(Unsafe, node u) {
         assert(hasNode(u));
-        outEdges[u].clear();
-        if (isWeighted()) {
-            outEdgeWeights[u].clear();
-        }
-        if (hasEdgeIds()) {
-            outEdgeIds[u].clear();
-        }
+        while (outMatrix.degree(u))
+            outMatrix.removeEdge(u, getIthNeighbor(u, 0));
     }
 
     /**
@@ -1184,13 +1126,8 @@ public:
      */
     void removePartialInEdges(Unsafe, node u) {
         assert(hasNode(u));
-        inEdges[u].clear();
-        if (isWeighted()) {
-            inEdgeWeights[u].clear();
-        }
-        if (hasEdgeIds()) {
-            inEdgeIds[u].clear();
-        }
+        while (inMatrix.degree(u))
+            inMatrix.removeEdge(u, getIthInNeighbor(u, 0));
     }
 
     /**
@@ -1220,7 +1157,7 @@ public:
      * @param v Node.
      * @return The number of outgoing neighbors.
      */
-    count degree(node v) const { return outEdges[v].size(); }
+    count degree(node v) const { return outMatrix.degree(v); }
 
     /**
      * Get the number of incoming neighbors of @a v.
@@ -1229,7 +1166,7 @@ public:
      * @return The number of incoming neighbors.
      * @note If the graph is not directed, the outgoing degree is returned.
      */
-    count degreeIn(node v) const { return directed ? inEdges[v].size() : outEdges[v].size(); }
+    count degreeIn(node v) const { return directed ? inMatrix.degree(v) : outMatrix.degree(v); }
 
     /**
      * Get the number of outgoing neighbors of @a v.
@@ -1237,7 +1174,7 @@ public:
      * @param v Node.
      * @return The number of outgoing neighbors.
      */
-    count degreeOut(node v) const { return outEdges[v].size(); }
+    count degreeOut(node v) const { return outMatrix.degree(v); }
 
     /**
      * Check whether @a v is isolated, i.e. degree is 0.
@@ -1247,7 +1184,7 @@ public:
     bool isIsolated(node v) const {
         if (!exists[v])
             throw std::runtime_error("Error, the node does not exist!");
-        return outEdges[v].empty() && (!directed || inEdges[v].empty());
+        return !outMatrix.degree(v) && (!directed || !inMatrix.degree(v));
     }
 
     /**
@@ -1597,9 +1534,21 @@ public:
      * neighbor exists.
      */
     node getIthNeighbor(node u, index i) const {
-        if (!hasNode(u) || i >= outEdges[u].size())
+        if (!hasNode(u))
             return none;
-        return outEdges[u][i];
+        auto nu = outMatrix.neighbors(u);
+        if (i >= nu.degree())
+            return none;
+        return nu[i].vertex();
+    }
+
+    node getIthInNeighbor(node u, index i) const {
+        if (!hasNode(u))
+            return none;
+        auto nu = inMatrix.neighbors(u);
+        if (i >= nu.degree())
+            return none;
+        return nu[i].vertex();
     }
 
     /**
@@ -1611,9 +1560,14 @@ public:
      * neighbor exists.
      */
     edgeweight getIthNeighborWeight(node u, index i) const {
-        if (!hasNode(u) || i >= outEdges[u].size())
+        if (!hasNode(u))
             return nullWeight;
-        return isWeighted() ? outEdgeWeights[u][i] : defaultEdgeWeight;
+        auto nu = outMatrix.neighbors(u);
+        if (i >= nu.degree())
+            return nullWeight;
+        if (!isWeighted())
+            return defaultEdgeWeight;
+        return nu[i].data().weight;
     }
 
     /**
@@ -1625,8 +1579,11 @@ public:
      * edge weight, or @c defaultEdgeWeight if unweighted.
      */
     std::pair<node, edgeweight> getIthNeighborWithWeight(node u, index i) const {
-        if (!hasNode(u) || i >= outEdges[u].size())
-            return {none, none};
+        if (!hasNode(u))
+            return {none, nullWeight};
+        auto nu = outMatrix.neighbors(u);
+        if (i >= nu.degree())
+            return {none, nullWeight};
         return getIthNeighborWithWeight(unsafe, u, i);
     }
 
@@ -1639,9 +1596,10 @@ public:
      * edge weight, or @c defaultEdgeWeight if unweighted.
      */
     std::pair<node, edgeweight> getIthNeighborWithWeight(Unsafe, node u, index i) const {
+        auto nu = outMatrix.neighbors(u);
         if (!isWeighted())
-            return {outEdges[u][i], defaultEdgeWeight};
-        return {outEdges[u][i], outEdgeWeights[u][i]};
+            return {nu[i].vertex(), defaultEdgeWeight};
+        return {nu[i].vertex(), nu[i].data().weight};
     }
 
     /**
@@ -1654,9 +1612,12 @@ public:
      */
     std::pair<node, edgeid> getIthNeighborWithId(node u, index i) const {
         assert(hasEdgeIds());
-        if (!hasNode(u) || i >= outEdges[u].size())
+        if (!hasNode(u))
             return {none, none};
-        return {outEdges[u][i], outEdgeIds[u][i]};
+        auto nu = outMatrix.neighbors(u);
+        if (i >= nu.degree())
+            return {none, none};
+        return {nu[i].vertex(), nu[i].data().id};
     }
 
     /* NODE ITERATORS */
@@ -1906,103 +1867,60 @@ template <typename T>
 void erase(node u, index idx, std::vector<std::vector<T>> &vec);
 // implementation for weighted == true
 template <bool hasWeights>
-inline edgeweight Graph::getOutEdgeWeight(node u, index i) const {
-    return outEdgeWeights[u][i];
+inline edgeweight Graph::getOutEdgeWeight(node u, dhb::EdgeData ed) const {
+    return ed.weight;
 }
 
 // implementation for weighted == false
 template <>
-inline edgeweight Graph::getOutEdgeWeight<false>(node, index) const {
-    return defaultEdgeWeight;
-}
-
-// implementation for weighted == true
-template <bool hasWeights>
-inline edgeweight Graph::getInEdgeWeight(node u, index i) const {
-    return inEdgeWeights[u][i];
-}
-
-// implementation for weighted == false
-template <>
-inline edgeweight Graph::getInEdgeWeight<false>(node, index) const {
+inline edgeweight Graph::getOutEdgeWeight<false>(node, dhb::EdgeData) const {
     return defaultEdgeWeight;
 }
 
 // implementation for hasEdgeIds == true
 template <bool graphHasEdgeIds>
-inline edgeid Graph::getOutEdgeId(node u, index i) const {
-    return outEdgeIds[u][i];
+inline edgeid Graph::getOutEdgeId(node u, dhb::EdgeData ed) const {
+    return ed.id;
 }
 
 // implementation for hasEdgeIds == false
 template <>
-inline edgeid Graph::getOutEdgeId<false>(node, index) const {
+inline edgeid Graph::getOutEdgeId<false>(node, dhb::EdgeData) const {
     return 0;
-}
-
-// implementation for hasEdgeIds == true
-template <bool graphHasEdgeIds>
-inline edgeid Graph::getInEdgeId(node u, index i) const {
-    return inEdgeIds[u][i];
-}
-
-// implementation for hasEdgeIds == false
-template <>
-inline edgeid Graph::getInEdgeId<false>(node, index) const {
-    return 0;
-}
-
-// implementation for graphIsDirected == true
-template <bool graphIsDirected>
-inline bool Graph::useEdgeInIteration(node /* u */, node /* v */) const {
-    return true;
-}
-
-// implementation for graphIsDirected == false
-template <>
-inline bool Graph::useEdgeInIteration<false>(node u, node v) const {
-    return u >= v;
 }
 
 template <bool graphIsDirected, bool hasWeights, bool graphHasEdgeIds, typename L>
 inline void Graph::forOutEdgesOfImpl(node u, L handle) const {
-    for (index i = 0; i < outEdges[u].size(); ++i) {
-        node v = outEdges[u][i];
-
-        if (useEdgeInIteration<graphIsDirected>(u, v)) {
-            edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, i),
-                          getOutEdgeId<graphHasEdgeIds>(u, i));
-        }
-    }
+    outMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+        edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                      getOutEdgeId<graphHasEdgeIds>(u, ed));
+    });
 }
 
 template <bool graphIsDirected, bool hasWeights, bool graphHasEdgeIds, typename L>
 inline void Graph::forInEdgesOfImpl(node u, L handle) const {
     if (graphIsDirected) {
-        for (index i = 0; i < inEdges[u].size(); i++) {
-            node v = inEdges[u][i];
-
-            if (useEdgeInIteration<true>(u, v)) {
-                edgeLambda<L>(handle, u, v, getInEdgeWeight<hasWeights>(u, i),
-                              getInEdgeId<graphHasEdgeIds>(u, i));
-            }
-        }
+        inMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+            edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                          getOutEdgeId<graphHasEdgeIds>(u, ed));
+        });
     } else {
-        for (index i = 0; i < outEdges[u].size(); ++i) {
-            node v = outEdges[u][i];
-
-            if (useEdgeInIteration<true>(u, v)) {
-                edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, i),
-                              getOutEdgeId<graphHasEdgeIds>(u, i));
-            }
-        }
+        outMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+            edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                          getOutEdgeId<graphHasEdgeIds>(u, ed));
+        });
     }
 }
 
 template <bool graphIsDirected, bool hasWeights, bool graphHasEdgeIds, typename L>
 inline void Graph::forEdgeImpl(L handle) const {
     for (node u = 0; u < z; ++u) {
-        forOutEdgesOfImpl<graphIsDirected, hasWeights, graphHasEdgeIds, L>(u, handle);
+        outMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+            if (!graphIsDirected && u < v)
+                return;
+            edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                          getOutEdgeId<graphHasEdgeIds>(u, ed));
+        });
     }
 }
 
@@ -2010,7 +1928,12 @@ template <bool graphIsDirected, bool hasWeights, bool graphHasEdgeIds, typename 
 inline void Graph::parallelForEdgesImpl(L handle) const {
 #pragma omp parallel for schedule(guided)
     for (omp_index u = 0; u < static_cast<omp_index>(z); ++u) {
-        forOutEdgesOfImpl<graphIsDirected, hasWeights, graphHasEdgeIds, L>(u, handle);
+        outMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+            if (!graphIsDirected && u < v)
+                return;
+            edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                          getOutEdgeId<graphHasEdgeIds>(u, ed));
+        });
     }
 }
 
@@ -2020,16 +1943,12 @@ inline double Graph::parallelSumForEdgesImpl(L handle) const {
 
 #pragma omp parallel for reduction(+ : sum)
     for (omp_index u = 0; u < static_cast<omp_index>(z); ++u) {
-        for (index i = 0; i < outEdges[u].size(); ++i) {
-            node v = outEdges[u][i];
-
-            // undirected, do not iterate over edges twice
-            // {u, v} instead of (u, v); if v == none, u > v is not fulfilled
-            if (useEdgeInIteration<graphIsDirected>(u, v)) {
-                sum += edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, i),
-                                     getOutEdgeId<graphHasEdgeIds>(u, i));
-            }
-        }
+        outMatrix.for_neighbors_target(u, [&](auto v, auto ed) {
+            if (!graphIsDirected && u < v)
+                return;
+            sum += edgeLambda<L>(handle, u, v, getOutEdgeWeight<hasWeights>(u, ed),
+                                 getOutEdgeId<graphHasEdgeIds>(u, ed));
+        });
     }
 
     return sum;
@@ -2240,96 +2159,100 @@ double Graph::parallelSumForEdges(L handle) const {
 
 template <typename Condition>
 std::pair<count, count> Graph::removeAdjacentEdges(node u, Condition condition, bool edgesIn) {
-    count removedEdges = 0;
-    count removedSelfLoops = 0;
+    throw std::runtime_error("Fix removeAdjacentEdges");
+    // FIXME count removedEdges = 0;
+    // FIXME count removedSelfLoops = 0;
 
-    // For directed graphs, this function is supposed to be called twice: one to remove out-edges,
-    // and one to remove in-edges.
-    auto &edges_ = edgesIn ? inEdges[u] : outEdges[u];
-    for (index vi = 0; vi < edges_.size();) {
-        if (condition(edges_[vi])) {
-            const auto isSelfLoop = (edges_[vi] == u);
-            removedSelfLoops += isSelfLoop;
-            removedEdges += !isSelfLoop;
-            edges_[vi] = edges_.back();
-            edges_.pop_back();
-            if (isWeighted()) {
-                auto &weights_ = edgesIn ? inEdgeWeights[u] : outEdgeWeights[u];
-                weights_[vi] = weights_.back();
-                weights_.pop_back();
-            }
-            if (hasEdgeIds()) {
-                auto &edgeIds_ = edgesIn ? inEdgeIds[u] : outEdgeIds[u];
-                edgeIds_[vi] = edgeIds_.back();
-                edgeIds_.pop_back();
-            }
-        } else {
-            ++vi;
-        }
-    }
+    // FIXME // For directed graphs, this function is supposed to be called twice: one to remove
+    // out-edges,
+    // FIXME // and one to remove in-edges.
+    // FIXME auto &edges_ = edgesIn ? inEdges[u] : outEdges[u];
+    // FIXME for (index vi = 0; vi < edges_.size();) {
+    // FIXME     if (condition(edges_[vi])) {
+    // FIXME         const auto isSelfLoop = (edges_[vi] == u);
+    // FIXME         removedSelfLoops += isSelfLoop;
+    // FIXME         removedEdges += !isSelfLoop;
+    // FIXME         edges_[vi] = edges_.back();
+    // FIXME         edges_.pop_back();
+    // FIXME         if (isWeighted()) {
+    // FIXME             auto &weights_ = edgesIn ? inEdgeWeights[u] : outEdgeWeights[u];
+    // FIXME             weights_[vi] = weights_.back();
+    // FIXME             weights_.pop_back();
+    // FIXME         }
+    // FIXME         if (hasEdgeIds()) {
+    // FIXME             auto &edgeIds_ = edgesIn ? inEdgeIds[u] : outEdgeIds[u];
+    // FIXME             edgeIds_[vi] = edgeIds_.back();
+    // FIXME             edgeIds_.pop_back();
+    // FIXME         }
+    // FIXME     } else {
+    // FIXME         ++vi;
+    // FIXME     }
+    // FIXME }
 
-    return {removedEdges, removedSelfLoops};
+    // FIXME return {removedEdges, removedSelfLoops};
 }
 
 template <class Lambda>
 void Graph::sortEdges(Lambda lambda) {
+    throw std::runtime_error("Fix sortEdges");
+    /*
+        std::vector<std::vector<index>> indicesGlobal(omp_get_max_threads());
 
-    std::vector<std::vector<index>> indicesGlobal(omp_get_max_threads());
+        const auto sortAdjacencyArrays = [&](node u, std::vector<node> &adjList,
+                                             std::vector<edgeweight> &weights,
+                                             std::vector<edgeid> &edgeIds) -> void {
+            auto &indices = indicesGlobal[omp_get_thread_num()];
+            if (adjList.size() > indices.size())
+                indices.resize(adjList.size());
 
-    const auto sortAdjacencyArrays = [&](node u, std::vector<node> &adjList,
-                                         std::vector<edgeweight> &weights,
-                                         std::vector<edgeid> &edgeIds) -> void {
-        auto &indices = indicesGlobal[omp_get_thread_num()];
-        if (adjList.size() > indices.size())
-            indices.resize(adjList.size());
+            const auto indicesEnd = indices.begin() + adjList.size();
+            std::iota(indices.begin(), indicesEnd, 0);
 
-        const auto indicesEnd = indices.begin() + adjList.size();
-        std::iota(indices.begin(), indicesEnd, 0);
-
-        if (isWeighted()) {
-            if (hasEdgeIds())
+            if (isWeighted()) {
+                if (hasEdgeIds())
+                    std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
+                        return lambda(WeightedEdgeWithId{u, adjList[a], weights[a], edgeIds[a]},
+                                      WeightedEdgeWithId{u, adjList[b], weights[b], edgeIds[b]});
+                    });
+                else
+                    std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
+                        return lambda(WeightedEdgeWithId{u, adjList[a], weights[a], 0},
+                                      WeightedEdgeWithId{u, adjList[b], weights[b], 0});
+                    });
+            } else if (hasEdgeIds())
                 std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
-                    return lambda(WeightedEdgeWithId{u, adjList[a], weights[a], edgeIds[a]},
-                                  WeightedEdgeWithId{u, adjList[b], weights[b], edgeIds[b]});
+                    return lambda(WeightedEdgeWithId{u, adjList[a], defaultEdgeWeight, edgeIds[a]},
+                                  WeightedEdgeWithId{u, adjList[b], defaultEdgeWeight, edgeIds[b]});
                 });
             else
                 std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
-                    return lambda(WeightedEdgeWithId{u, adjList[a], weights[a], 0},
-                                  WeightedEdgeWithId{u, adjList[b], weights[b], 0});
+                    return lambda(WeightedEdgeWithId{u, adjList[a], defaultEdgeWeight, 0},
+                                  WeightedEdgeWithId{u, adjList[b], defaultEdgeWeight, 0});
                 });
-        } else if (hasEdgeIds())
-            std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
-                return lambda(WeightedEdgeWithId{u, adjList[a], defaultEdgeWeight, edgeIds[a]},
-                              WeightedEdgeWithId{u, adjList[b], defaultEdgeWeight, edgeIds[b]});
-            });
-        else
-            std::sort(indices.begin(), indicesEnd, [&](auto a, auto b) -> bool {
-                return lambda(WeightedEdgeWithId{u, adjList[a], defaultEdgeWeight, 0},
-                              WeightedEdgeWithId{u, adjList[b], defaultEdgeWeight, 0});
-            });
 
-        Aux::ArrayTools::applyPermutation(adjList.begin(), adjList.end(), indices.begin());
+            Aux::ArrayTools::applyPermutation(adjList.begin(), adjList.end(), indices.begin());
 
-        if (isWeighted())
-            Aux::ArrayTools::applyPermutation(weights.begin(), weights.end(), indices.begin());
+            if (isWeighted())
+                Aux::ArrayTools::applyPermutation(weights.begin(), weights.end(), indices.begin());
 
-        if (hasEdgeIds())
-            Aux::ArrayTools::applyPermutation(edgeIds.begin(), edgeIds.end(), indices.begin());
-    };
+            if (hasEdgeIds())
+                Aux::ArrayTools::applyPermutation(edgeIds.begin(), edgeIds.end(), indices.begin());
+        };
 
-    balancedParallelForNodes([&](const node u) {
-        if (degree(u) < 2)
-            return;
+        balancedParallelForNodes([&](const node u) {
+            if (degree(u) < 2)
+                return;
 
-        std::vector<edgeweight> dummyEdgeWeights;
-        std::vector<edgeid> dummyEdgeIds;
-        sortAdjacencyArrays(u, outEdges[u], isWeighted() ? outEdgeWeights[u] : dummyEdgeWeights,
-                            hasEdgeIds() ? outEdgeIds[u] : dummyEdgeIds);
+            std::vector<edgeweight> dummyEdgeWeights;
+            std::vector<edgeid> dummyEdgeIds;
+            sortAdjacencyArrays(u, outEdges[u], isWeighted() ? outEdgeWeights[u] : dummyEdgeWeights,
+                                hasEdgeIds() ? outEdgeIds[u] : dummyEdgeIds);
 
-        if (isDirected())
-            sortAdjacencyArrays(u, inEdges[u], isWeighted() ? inEdgeWeights[u] : dummyEdgeWeights,
-                                hasEdgeIds() ? inEdgeIds[u] : dummyEdgeIds);
-    });
+            if (isDirected())
+                sortAdjacencyArrays(u, inEdges[u], isWeighted() ? inEdgeWeights[u] :
+       dummyEdgeWeights, hasEdgeIds() ? inEdgeIds[u] : dummyEdgeIds);
+        });
+        */
 }
 
 } /* namespace NetworKit */

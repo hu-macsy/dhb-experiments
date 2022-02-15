@@ -54,7 +54,7 @@ endif()
 
 ################################################################################
 # Compilation Flags
-set(NETWORKIT_CXX_FLAGS "")
+set(NETWORKIT_CXX_FLAGS "-DDHB_64BIT_IDS")
 set(NETWORKIT_LINK_FLAGS "")
 
 if (NETWORKIT_QUIET_LOGGING)
@@ -134,6 +134,7 @@ if (NETWORKIT_SANITY_CHECKS)
     set(NETWORKIT_CXX_FLAGS "${NETWORKIT_CXX_FLAGS} -DNETWORKIT_SANITY_CHECKS")
 endif()
 
+find_package(dhb REQUIRED)
 
 # finding or creating OpenMP target. This is likely to fail for CMake Version < 3.12.
 find_package(OpenMP)
@@ -263,7 +264,7 @@ if(NETWORKIT_BUILD_CORE AND NETWORKIT_MONOLITH)
 		target_include_directories(networkit_state BEFORE PUBLIC "${PROJECT_SOURCE_DIR}/include")
 	endif()
 
-	target_link_libraries(networkit PRIVATE OpenMP::OpenMP_CXX PUBLIC tlx)
+	target_link_libraries(networkit PRIVATE dhb::dhb OpenMP::OpenMP_CXX PUBLIC tlx)
 
 	set_target_properties(networkit PROPERTIES
 			CXX_STANDARD ${NETWORKIT_CXX_STANDARD}
@@ -468,6 +469,7 @@ if (NETWORKIT_BUILD_TESTS)
 
 		target_link_libraries(networkit_tests
 			PRIVATE
+				dhb::dhb
 				gtest
 				networkit
 				tlx
@@ -510,6 +512,7 @@ if (NETWORKIT_BUILD_TESTS)
 				PUBLIC
 					gtest
 				PRIVATE
+					dhb::dhb
 					tlx
 					networkit_auxiliary
 					OpenMP::OpenMP_CXX
@@ -545,6 +548,7 @@ function(networkit_add_extra IS_TEST MOD NAME)
 					gtest networkit_gtest_main
 				PRIVATE
 					networkit_${MOD}
+					dhb::dhb
 					tlx
 					OpenMP::OpenMP_CXX
 					)
