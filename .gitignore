@@ -1,0 +1,19 @@
+# simexpal
+/dev-builds/*
+status.cache
+/aux/*
+/output/*
+validation.cache
+/instances/*
+
+# ignore checkout of networkit
+develop/dhb32
+develop/dhb64
+develop/networkit
+develop/Stinger
+develop/networkit_dhb
+develop/gdsb
+develop/aspen
+
+# ignore plots
+plots/*

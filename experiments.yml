@@ -1,0 +1,882 @@
+builds:
+  - name: dhb32
+    git: git@github.com:hu-macsy/dhb.git
+    recursive-clone: true
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DWITH_DHB_64BIT_IDS=OFF'
+        - '-DWITH_DHB_SYSTEM_ALLOCATOR=OFF'
+        - '-DWITH_DHB_SCATTER=counting'
+        - '-DCMAKE_INSTALL_LIBDIR=lib'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: dhb64
+    git: git@github.com:hu-macsy/dhb.git
+    recursive-clone: true
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DWITH_DHB_64BIT_IDS=ON'
+        - '-DCMAKE_INSTALL_LIBDIR=lib'
+        - '-DWITH_DHB_SYSTEM_ALLOCATOR=OFF'
+        - '-DWITH_DHB_SCATTER=counting'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: gdsb
+    git: git@github.com:hu-macsy/graph-ds-benchmark.git
+    recursive-clone: true
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DCMAKE_INSTALL_LIBDIR=lib'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: dhb_exp
+    requires:
+      - dhb32
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: networkit
+    git: git@gitlab.informatik.hu-berlin.de:grintena/networkit-dyntriangle.git
+    recursive-clone: true
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DNETWORKIT_NATIVE=ON'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: networkit_dhb
+    git: git@gitlab.informatik.hu-berlin.de:grintena/networkit-dhb.git
+    recursive-clone: true
+    requires:
+      - dhb64
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DNETWORKIT_NATIVE=ON'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: nk_measurements
+    requires:
+      - networkit
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: Stinger
+    git: 'https://github.com/stingergraph/stinger'
+    recursive-clone: true
+    configure:
+      - args:
+          - 'cmake'
+          - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+          - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+          - '-DCMAKE_BUILD_TYPE=Release'
+          - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['make']
+  - name: Stinger_measurements
+    requires:
+      - Stinger
+      - dhb32
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '-DSTINGER_COMPILE_DIR=@COMPILE_DIR_FOR:Stinger@'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: nk_algos_vanilla
+    requires:
+      - networkit
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: nk_algos_dhb
+    requires:
+      - networkit_dhb
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: aspen
+    git: 'https://github.com/ldhulipala/aspen.git'
+    recursive-clone: true
+    compile:
+      - args:
+          - 'make'
+        workdir: '@THIS_CLONE_DIR@/code/'
+      - args: ['cp', '-r', '@THIS_SOURCE_DIR@/code/graph', '@THIS_SOURCE_DIR@/code/common', '@THIS_SOURCE_DIR@/code/algorithms', '@THIS_SOURCE_DIR@/code/pbbslib', '@THIS_SOURCE_DIR@/code/trees', '@THIS_SOURCE_DIR@/code/lib_extensions', '@THIS_SOURCE_DIR@/code/old', '@THIS_COMPILE_DIR@']
+  - name: aspen_measurements
+    requires:
+      - aspen
+      - dhb32
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-v'
+        - '-GNinja'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '-DASPEN_COMPILE_DIR=@COMPILE_DIR_FOR:aspen@'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+  - name: terrace
+    git: git@gitlab.informatik.hu-berlin.de:macsy/code-staff/terrace-gcc-omp.git
+    compile:
+      - args: ['rsync', '-a', '@THIS_SOURCE_DIR@/.', '@THIS_COMPILE_DIR@']
+      - args: ['make', 'OPENMP=1']
+    install:
+      - args: ['mkdir', '@THIS_PREFIX_DIR@/lib/']
+      - args: ['cp', '@THIS_COMPILE_DIR@/libterrace.so', '@THIS_PREFIX_DIR@/lib/']
+      - args: ['cp', '-r', '@THIS_COMPILE_DIR@/include', '@THIS_PREFIX_DIR@/']
+  - name: terrace_measurements
+    requires:
+      - terrace
+      - dhb32
+      - cppexp
+    configure:
+      - args:
+        - 'cmake'
+        - '-v'
+        - '-GNinja'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-Dcppexp_DIR=@PREFIX_DIR_FOR:cppexp@/lib/cmake/cppexp'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '-DTERRACE_PREFIX_DIR=@PREFIX_DIR_FOR:terrace@'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
+
+revisions:
+  - develop: true
+    build_version:
+      'dhb32': 'main'
+      'dhb64': 'main'
+      'dhb_exp': ''
+      'gdsb': 'main'
+      'networkit': 'master'
+      'networkit_dhb': 'master'
+      'nk_measurements': ''
+      'Stinger': 'master'
+      'Stinger_measurements': ''
+      'nk_algos_vanilla': ''
+      'nk_algos_dhb': ''
+      'aspen': 'master'
+      'aspen_measurements': ''
+      'terrace': 'main'
+      'terrace_measurements': ''
+
+experiments:
+  - name: dhb_random_insertions
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_random_insertions',
+           '-r', 'rand_insert', '--insert-factor', '15', '@EXTRA_ARGS@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_insert_static
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_insert_static',
+           '-r', 'insert', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_insert_bulk_static
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_insert_bulk_static',
+           '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_temporal_insertions
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_temporal_insertions',
+           '-r', 'temporal_insertions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_temporal_updates
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_temporal_updates',
+           '-r', 'temporal_updates', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_temporal_deletions
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_temporal_deletions',
+           '-r', 'temporal_deletions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_bfs
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_bfs',
+           '-r', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_spgemm
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_spgemm',
+           '-r', 'spgemm', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_insert_single
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '--experiment', 'insert_single', '-r', 'insert_single', '@EXTRA_ARGS@', '--graph', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_par_bulk
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_par_bulk',
+           '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: dhb_par_batches
+    use_builds: [dhb_exp]
+    timeout: 1800
+    args: ['dhb_exp', '-e', 'dhb_par_batches',
+           '-r', 'insert_batch', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+  - name: networkit_insert_static
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements', '-e', 'networkit_insert_static',
+           '-r', 'insert', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_insert_bulk_static
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements', '-e', 'networkit_insert_bulk_static',
+           '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_temporal_insertions
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements',  '-e', 'networkit_temporal_insertions',
+           '-r', 'temporal_insertions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_temporal_updates
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements',  '-e', 'networkit_temporal_updates',
+           '-r', 'temporal_updates', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_temporal_deletions
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements',  '-e', 'networkit_temporal_deletions',
+           '-r', 'temporal_deletions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_bfs
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements',  '-e', 'networkit_bfs',
+           '-r', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: networkit_spgemm
+    use_builds: [nk_measurements]
+    timeout: 1800
+    args: ['nk_measurements',  '-e', 'networkit_spgemm',
+           '-r', 'spgemm', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+  - name: stinger_insert_static
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_insert_static',
+           '-r', 'insert', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_insert_bulk_static
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_insert_bulk_static',
+           '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_temporal_insertions
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_temporal_insertions',
+           '-r', 'temporal_insertions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_temporal_updates
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_temporal_updates',
+           '-r', 'temporal_updates', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_temporal_deletions
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_temporal_deletions',
+           '-r', 'temporal_deletions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_par_bulk
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_par_bulk',
+           '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_par_batches
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_par_batches',
+           '-r', 'insert_batch', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_bfs
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_bfs',
+           '-r', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: stinger_spgemm
+    use_builds: [Stinger_measurements]
+    timeout: 1800
+    args: ['stinger_measurements', '-e', 'stinger_spgemm',
+           '-r', 'spgemm', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+  - name: nkv_bfs
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkv_bfs', '--algo', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkdhb_bfs
+    use_builds: [nk_algos_dhb]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkdhb_bfs', '--algo', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: csr_bfs
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'csr_bfs', '--algo', 'csr_bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkv_spmv
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkv_spmv', '--algo', 'spmv', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkdhb_spmv
+    use_builds: [nk_algos_dhb]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkdhb_spmv', '--algo', 'spmv', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: csr_spmv
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'csr_spmv', '--algo', 'csr_spmv', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkv_dyn_cc
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkv_dyn_cc', '--algo', 'dyn-cc', '@EXTRA_ARGS@', '--temporal', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkdhb_dyn_cc
+    use_builds: [nk_algos_dhb]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkdhb_dyn_cc', '--algo', 'dyn-cc', '@EXTRA_ARGS@', '--temporal', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkv_dyn_triangle
+    use_builds: [nk_algos_vanilla]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkv_dyn_triangle', '--algo', 'dyn-triangle', '@EXTRA_ARGS@', '--temporal', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: nkdhb_dyn_triangle
+    use_builds: [nk_algos_dhb]
+    timeout: 1800
+    args: ['nk_algos', '-e', 'nkdhb_dyn_triangle', '--algo', 'dyn-triangle', '@EXTRA_ARGS@', '--temporal', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+  - name: aspen_insert_static
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_insert_static',
+        '-r', 'insert', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_insert_bulk_static
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_insert_static',
+        '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_temporal_insertions
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_temporal_insertions',
+        '-r', 'temporal_insertions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_temporal_deletions
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_temporal_deletions',
+        '-r', 'temporal_deletions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_bfs
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_bfs',
+        '-r', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_spgemm
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_spgemm',
+        '-r', 'spgemm', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      NUM_THREADS: 1
+  - name: aspen_par_bulk
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_par_bulk',
+        '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: aspen_par_batches
+    use_builds: [aspen_measurements]
+    timeout: 1800
+    args: ['aspen_measurements', '-e', 'aspen_par_batches',
+        '-r', 'insert_batch', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+  - name: terrace_insert_static
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_insert_static',
+        '-r', 'insert', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_insert_bulk_static
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_insert_static',
+        '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_temporal_insertions
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_temporal_insertions',
+        '-r', 'temporal_insertions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_temporal_deletions
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_temporal_deletions',
+        '-r', 'temporal_deletions', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_bfs
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_bfs',
+        '-r', 'bfs', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_spgemm
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_spgemm',
+        '-r', 'spgemm', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+    environ:
+      OMP_NUM_THREADS: 1
+  - name: terrace_par_bulk
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_par_bulk',
+        '-r', 'insert_bulk', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+  - name: terrace_par_batches
+    use_builds: [terrace_measurements]
+    timeout: 1800
+    args: ['terrace_measurements', '-e', 'terrace_par_batches',
+        '-r', 'insert_batch', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 36
+
+variants:
+  - axis: 'threads'
+    items:
+      - name: t01
+        extra_args: ['-t1']
+        environ:
+            NUM_THREADS: 1 # For Aspen.
+            OMP_NUM_THREADS: 1 # For Terrace.
+      - name: t02
+        extra_args: ['-t2']
+        environ:
+            NUM_THREADS: 2 # For Aspen.
+            OMP_NUM_THREADS: 2 # For Terrace.
+      - name: t04
+        extra_args: ['-t4']
+        environ:
+            NUM_THREADS: 4 # For Aspen.
+            OMP_NUM_THREADS: 4 # For Terrace.
+      - name: t08
+        extra_args: ['-t8']
+        environ:
+            NUM_THREADS: 8 # For Aspen.
+            OMP_NUM_THREADS: 8 # For Terrace.
+      - name: t16
+        extra_args: ['-t16']
+        environ:
+            NUM_THREADS: 16 # For Aspen.
+            OMP_NUM_THREADS: 16 # For Terrace.
+      - name: t18
+        extra_args: ['-t18']
+        environ:
+            NUM_THREADS: 18 # For Aspen.
+            OMP_NUM_THREADS: 18 # For Terrace.
+      - name: t36
+        extra_args: ['-t36']
+        environ:
+            NUM_THREADS: 36 # For Aspen.
+            OMP_NUM_THREADS: 36 # For Terrace.
+  - axis: 'batch-size'
+    items:
+      - name: bs64
+        extra_args: ['--batch-size', '64']
+      - name: bs128
+        extra_args: ['--batch-size', '128']
+      - name: bs256
+        extra_args: ['--batch-size', '256']
+      - name: bs512
+        extra_args: ['--batch-size', '512']
+      - name: bs1024
+        extra_args: ['--batch-size', '1024']
+      - name: bs2048
+        extra_args: ['--batch-size', '2048']
+      - name: bs4096
+        extra_args: ['--batch-size', '4096']
+      - name: bs8192
+        extra_args: ['--batch-size', '8192']
+      - name: bs16384
+        extra_args: ['--batch-size', '16384']
+      - name: bs32768
+        extra_args: ['--batch-size', '32768']
+      - name: bs65536
+        extra_args: ['--batch-size', '65536']
+      - name: bs131072
+        extra_args: ['--batch-size', '131072']
+
+matrix:
+  include:
+    # For static insertion plot.
+    - experiments:
+        - dhb_insert_static
+        - aspen_insert_static
+        - terrace_insert_static
+        - networkit_insert_static
+        - stinger_insert_static
+      instsets: [static]
+      axes: []
+
+    # For static bulk insertions plot.
+    - experiments:
+        - dhb_insert_bulk_static
+        - aspen_insert_bulk_static
+        - terrace_insert_bulk_static
+        - networkit_insert_bulk_static
+        - stinger_insert_bulk_static
+      instsets: [static]
+      axes: []
+
+    # For temporal plots.
+    - experiments:
+        - dhb_temporal_insertions
+        - dhb_temporal_updates
+        - dhb_temporal_deletions
+        # Aspen does not have updates.
+        - aspen_temporal_insertions
+        - aspen_temporal_deletions
+        - terrace_temporal_insertions
+        - terrace_temporal_deletions
+        - networkit_temporal_insertions
+        - networkit_temporal_updates
+        - networkit_temporal_deletions
+        - stinger_temporal_insertions
+        - stinger_temporal_updates
+        # STINGER deletions take too long.
+      instsets: [temporal]
+      axes: []
+
+    # For use cases plot.
+    - experiments:
+        - dhb_bfs
+        - aspen_bfs
+        - terrace_bfs
+        - networkit_bfs
+        - stinger_bfs
+        - dhb_spgemm
+        - aspen_spgemm
+        - terrace_spgemm
+        - networkit_spgemm
+        - stinger_spgemm
+      instsets: [static]
+      axes: []
+
+    # For batch size plot.
+    - experiments:
+        - dhb_par_batches
+        - aspen_par_batches
+        - terrace_par_batches
+        - stinger_par_batches
+      instsets: [for_batchsize]
+      axes: [threads, 'batch-size']
+      variants: [t36]
+
+    # For parallel scalability plot.
+    - experiments:
+        - dhb_par_bulk
+        - aspen_par_bulk
+        - terrace_par_bulk
+        - stinger_par_bulk
+      instsets: [static]
+      axes: [threads]
+
+    # For graph size scalability plot.
+    - experiments: [dhb_random_insertions]
+      instsets: [generated]
+      axes: []
+
+    # Networkit-DHB experiments.
+    - experiments: [nkv_spmv, nkdhb_spmv, csr_spmv, nkv_bfs, nkdhb_bfs, csr_bfs]
+      instsets: [static]
+      axes: []
+
+#    - experiments: [nkv_dyn_cc, nkdhb_dyn_cc, nkv_dyn_triangle, nkdhb_dyn_triangle]
+#      instsets: [temporal_u_v_t, temporal_u_v_w_t]
+#      axes: []
+
+instances:
+  - method: url
+    set: [temporal]
+    url: 'http://nrvis.com/download/data/dynamic/@INSTANCE_FILENAME@.zip'
+    items:
+      - name: soc-flickr-growth
+        extra_args: ['--weighted', '--temporal-graph']
+#      - name: rec-amazon-ratings
+#        extra_args: ['--weighted', '--temporal-graph']
+      - name: rec-epinions-user-ratings
+        extra_args: ['--weighted', '--temporal-graph']
+      - name: ia-stackexch-user-marks-post-und
+        extra_args: ['--weighted', '--temporal-graph']
+      - name: soc-epinions-trust-dir
+        extra_args: ['--weighted', '--temporal-graph']
+  - method: url
+    set: [temporal]
+    url: 'http://nrvis.com/download/data/dynamic/@INSTANCE_FILENAME@.zip'
+    items:
+      - name: soc-youtube-growth
+        extra_args: ['--temporal-graph']
+      - name: sx-stackoverflow
+        extra_args: ['--temporal-graph']
+  - repo: snap
+    set: [static, for_batchsize]
+    items:
+      - cit-Patents
+      - com-friendster
+      - web-BerkStan
+      - wiki-topcats
+      - soc-LiveJournal1
+      # The following graphs have been removed from our final experiments,
+      # due to their low edge count.
+      # - roadNet-CA
+      # - web-Google
+      # - wiki-Talk
+      # - amazon0601
+  - repo: snap
+    set: [temporal]
+    items:
+      - wiki-talk-temporal
+  # The following static files are to be installed manually in the instances folder
+  # we did not include them into the automatic download procedure due to their
+  # file size.
+  - repo: local
+    set: [static]
+    items:
+      - com-orkut
+      - tech-p2p
+      - web-uk-2005
+      - web-wikipedia_link_en13
+      - soc-twitter-mpi-sws
+      #- web-ClueWeb09.edges
+  - repo: local
+    set: [generated]
+    items:
+      - name: vc20
+        files: []
+        extra_args: ['--vertex-count', '1048576']
+      - name: vc21
+        files: []
+        extra_args: ['--vertex-count', '2097152']
+      - name: vc22
+        files: []
+        extra_args: ['--vertex-count', '4194304']
+      - name: vc23
+        files: []
+        extra_args: ['--vertex-count', '8388608']
+      - name: vc24
+        files: []
+        extra_args: ['--vertex-count', '16777216']
+      - name: vc25
+        files: []
+        extra_args: ['--vertex-count', '33554432']
+      - name: vc26
+        files: []
+        extra_args: ['--vertex-count', '67108864']
