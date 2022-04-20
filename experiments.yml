@@ -830,7 +830,6 @@ instances:
     set: [static, for_batchsize]
     items:
       - cit-Patents
-      - com-friendster
       - web-BerkStan
       - wiki-topcats
       - soc-LiveJournal1
@@ -855,6 +854,7 @@ instances:
       - web-uk-2005
       - web-wikipedia_link_en13
       - soc-twitter-mpi-sws
+      - com-friendster
       #- web-ClueWeb09.edges
   - repo: local
     set: [generated]
