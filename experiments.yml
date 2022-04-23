@@ -1,4 +1,21 @@
 builds:
+  - name: graph_analysis
+    requires:
+      - dhb32
+      - gdsb
+    configure:
+      - args:
+        - 'cmake'
+        - '-GNinja'
+        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+        - '-DCMAKE_BUILD_TYPE=Release'
+        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+        - '@THIS_SOURCE_DIR@'
+    compile:
+      - args: ['ninja']
+    install:
+      - args: ['ninja', 'install']
   - name: dhb32
     git: https://github.com/hu-macsy/dhb.git
     recursive-clone: true
