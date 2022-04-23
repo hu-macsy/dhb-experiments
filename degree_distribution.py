@@ -1,12 +1,6 @@
 import networkit as nk
 import sys
 
-def delegate_reader(weighted : bool, timestamped : bool):
-    if not weighted and not timestamped:
-        return nk.graphio.SNAPGraphReader(directed=True, remapNodes=True, nodeCount=0)
-    else:
-        return nk.graphio.EdgeListReader(' ', firstNode=1, commentPrefix='#', continuous=True, directed=True)
-
 class DegreeDistribution:
     min_degree : int = sys.maxsize
     max_degree : int = 0
@@ -27,19 +21,21 @@ def compute_degree_distribution(graph : nk.Graph):
     return deg_dist
 
 def main():
-    if len(sys.argv) != 4:
-        print('Need to pass filename, weighted = 1, timestamped = 1')
+    if len(sys.argv) != 3:
+        print('Need to pass filename and config id.')
         return
 
     filename : str = sys.argv[1]
-    weighted : bool = sys.argv[2]
-    timestamped : bool = sys.argv[3]
+    config_id : int = sys.argv[2]
 
-    # reader = nk.graphio.SNAPGraphReader(directed=True, remapNodes=True, nodeCount=0)
-    
-    reader = nk.graphio.EdgeListReader(' ', firstNode=1, commentPrefix='#', continuous=True, directed=True)
+    reader = {
+      1 : nk.graphio.SNAPGraphReader(directed=True, remapNodes=True, nodeCount=0),
+      2 : nk.graphio.EdgeListReader(' ', firstNode=0, commentPrefix='%', continuous=True, directed=True),
+      3 : nk.graphio.EdgeListReader(' ', firstNode=0, commentPrefix='#', continuous=True, directed=True),
+      4 : nk.graphio.KONECTGraphReader(remapNodes=False, handlingmethod=nk.graphio.MultipleEdgesHandling.DiscardEdges)
+    }.get(config_id, nk.graphio.SNAPGraphReader(directed=True, remapNodes=True, nodeCount=0))
 
-    print('Reading graph file [' + filename + '], weighted: ' + str(weighted) + ', timestamped: ' + str(timestamped))
+    print('Reading graph file [' + filename + '], config id: ' + str(config_id))
     graph : nk.Graph = reader.read(filename)
 
     deg_dist : DegreeDistribution = compute_degree_distribution(graph)
