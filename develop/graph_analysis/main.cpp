@@ -36,8 +36,7 @@ dhb::Edges create_random_edges(size_t count, unsigned int const max_id, std::mt1
 }
 
 dhb::Edges retrieve_edges(fs::path const& graph_path, bool const temporal_graph,
-                          bool const weighted_graph_file, std::mt19937& prng,
-                          unsigned int const vertex_count, unsigned int const insert_factor) {
+                          bool const weighted_graph_file, std::mt19937& prng) {
     dhb::Edges edges;
     std::ifstream graph_input(graph_path);
     std::uniform_real_distribution<float> distrib{0.0f, 1.0f};
@@ -79,13 +78,14 @@ int main(int argc, char** argv) {
     CLI11_PARSE(app, argc, argv);
 
     fs::path graph_path(std::move(graph));
-    if (!fs::exists(graph_path) && insertion_routine != InsertionRoutine::random) {
+    if (!fs::exists(graph_path)) {
         std::cerr << "Path to file: " << graph_path.c_str() << " does not exist!" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-    dhb::Edges edges = retrieve_edges(graph_path, temporal_graph, weighted_graph_file, prng,
-                                      vertex_count, insert_factor);
+    std::mt19937 prng{42};
+
+    dhb::Edges edges = retrieve_edges(graph_path, temporal_graph, weighted_graph_file, prng);
 
     unsigned int const edge_count_in = edges.size();
 
@@ -98,12 +98,10 @@ int main(int argc, char** argv) {
     unsigned int const edge_count_out = matrix.edges_count();
     unsigned int const vertex_count = matrix.vertices_count();
     unsigned int const max_degree = std::get<0>(dhb::max_degree(matrix));
-    dhb::Vertex const max_degree_node = std::get<1>(max_degree(matrix));
-    unsigned int const max_degree_after = std::get<0>(max_degree(matrix));
+    dhb::Vertex const max_degree_node = std::get<1>(dhb::max_degree(matrix));
 
     gdsb::out("experiment", experiment_name);
     gdsb::out("graph", graph_path.filename());
-    gdsb::out("edges_read_in", edges_read_in);
     gdsb::out("temporal_graph", temporal_graph);
     gdsb::out("format", "DHB");
     gdsb::out("vertex_count", vertex_count);
