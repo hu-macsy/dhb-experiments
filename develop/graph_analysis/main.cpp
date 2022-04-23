@@ -97,8 +97,26 @@ int main(int argc, char** argv) {
 
     unsigned int const edge_count_out = matrix.edges_count();
     unsigned int const vertex_count = matrix.vertices_count();
-    unsigned int const max_degree = std::get<0>(dhb::max_degree(matrix));
-    dhb::Vertex const max_degree_node = std::get<1>(dhb::max_degree(matrix));
+
+    dhb::Vertex max_degree_node = 0u;
+    dhb::Vertex min_degree_node = 0u;
+    unsigned long long int acc_degree = matrix.degree(max_degree_node);
+
+    for (dhb::Vertex u = 1; u < matrix.vertices_count(); ++u) {
+        dhb::Vertex u_deg = matrix.degree(u);
+        acc_degree += u_deg;
+
+        if (u_deg > matrix.degree(max_degree_node)) {
+            max_degree_node = u;
+        } else if (u_deg < matrix.degree(min_degree_node)) {
+            min_degree_node = u;
+        }
+    }
+
+    unsigned int const max_degree = matrix.degree(max_degree_node);
+    unsigned int const min_degree = matrix.degree(min_degree_node);
+    double mean_degree = acc_degree / static_cast<double>(matrix.vertices_count());
+    mean_degree = std::ceil(mean_degree * 10.0) / 10.0;
 
     gdsb::out("experiment", experiment_name);
     gdsb::out("graph", graph_path.filename());
@@ -109,6 +127,9 @@ int main(int argc, char** argv) {
     gdsb::out("edge_count_out", edge_count_out);
     gdsb::out("max_degree", max_degree);
     gdsb::out("max_degree_node", max_degree_node);
+    gdsb::out("min_degree", min_degree);
+    gdsb::out("min_degree_node", min_degree_node);
+    gdsb::out("mean_degree", mean_degree);
 
     return 0;
 }
