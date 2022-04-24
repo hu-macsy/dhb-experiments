@@ -17,7 +17,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: dhb32
-    git: https://github.com/hu-macsy/dhb.git
+    git: git@github.com:hu-macsy/dhb.git
     recursive-clone: true
     configure:
       - args:
@@ -35,7 +35,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: dhb64
-    git: https://github.com/hu-macsy/dhb.git
+    git: git@github.com:hu-macsy/dhb.git
     recursive-clone: true
     configure:
       - args:
@@ -53,7 +53,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: gdsb
-    git: https://github.com/hu-macsy/graph-ds-benchmark.git
+    git: git@github.com:hu-macsy/graph-ds-benchmark.git
     recursive-clone: true
     configure:
       - args:
@@ -84,177 +84,177 @@ builds:
       - args: ['ninja']
     install:
       - args: ['ninja', 'install']
-  - name: networkit
-    git: git@gitlab.informatik.hu-berlin.de:grintena/networkit-dyntriangle.git
-    recursive-clone: true
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-DNETWORKIT_NATIVE=ON'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: networkit_dhb
-    git: https://github.com/hu-macsy/dhb-experiments.git
-    recursive-clone: true
-    requires:
-      - dhb64
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-DNETWORKIT_NATIVE=ON'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: nk_measurements
-    requires:
-      - networkit
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: Stinger
-    git: 'https://github.com/stingergraph/stinger'
-    recursive-clone: true
-    configure:
-      - args:
-          - 'cmake'
-          - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-          - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-          - '-DCMAKE_BUILD_TYPE=Release'
-          - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['make']
-  - name: Stinger_measurements
-    requires:
-      - Stinger
-      - dhb32
-      - gdsb
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
-        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '-DSTINGER_COMPILE_DIR=@COMPILE_DIR_FOR:Stinger@'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: nk_algos_vanilla
-    requires:
-      - networkit
-      - gdsb
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
-        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: nk_algos_dhb
-    requires:
-      - networkit_dhb
-      - gdsb
-    configure:
-      - args:
-        - 'cmake'
-        - '-GNinja'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
-        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: aspen
-    git: https://github.com/hu-macsy/dhb-experiments.git
-    recursive-clone: true
-    compile:
-      - args:
-          - 'make'
-        workdir: '@THIS_CLONE_DIR@/code/'
-      - args: ['cp', '-r', '@THIS_SOURCE_DIR@/code/graph', '@THIS_SOURCE_DIR@/code/common', '@THIS_SOURCE_DIR@/code/algorithms', '@THIS_SOURCE_DIR@/code/pbbslib', '@THIS_SOURCE_DIR@/code/trees', '@THIS_SOURCE_DIR@/code/lib_extensions', '@THIS_SOURCE_DIR@/code/old', '@THIS_COMPILE_DIR@']
-  - name: aspen_measurements
-    requires:
-      - aspen
-      - dhb32
-      - gdsb
-    configure:
-      - args:
-        - 'cmake'
-        - '-v'
-        - '-GNinja'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
-        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '-DASPEN_COMPILE_DIR=@COMPILE_DIR_FOR:aspen@'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
-  - name: terrace
-    git: https://github.com/hu-macsy/dhb-experiments.git
-    compile:
-      - args: ['rsync', '-a', '@THIS_SOURCE_DIR@/.', '@THIS_COMPILE_DIR@']
-      - args: ['make', 'OPENMP=1']
-    install:
-      - args: ['mkdir', '@THIS_PREFIX_DIR@/lib/']
-      - args: ['cp', '@THIS_COMPILE_DIR@/libterrace.so', '@THIS_PREFIX_DIR@/lib/']
-      - args: ['cp', '-r', '@THIS_COMPILE_DIR@/include', '@THIS_PREFIX_DIR@/']
-  - name: terrace_measurements
-    requires:
-      - terrace
-      - dhb32
-      - cppexp
-    configure:
-      - args:
-        - 'cmake'
-        - '-v'
-        - '-GNinja'
-        - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
-        - '-Dcppexp_DIR=@PREFIX_DIR_FOR:cppexp@/lib/cmake/cppexp'
-        - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
-        - '-DCMAKE_BUILD_TYPE=Release'
-        - '-DTERRACE_PREFIX_DIR=@PREFIX_DIR_FOR:terrace@'
-        - '@THIS_SOURCE_DIR@'
-    compile:
-      - args: ['ninja']
-    install:
-      - args: ['ninja', 'install']
+  # - name: networkit
+  #   git: git@gitlab.informatik.hu-berlin.de:grintena/networkit-dyntriangle.git
+  #   recursive-clone: true
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-DNETWORKIT_NATIVE=ON'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: networkit_dhb
+  #   git: https://github.com/hu-macsy/dhb-experiments.git
+  #   recursive-clone: true
+  #   requires:
+  #     - dhb64
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-DNETWORKIT_NATIVE=ON'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: nk_measurements
+  #   requires:
+  #     - networkit
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: Stinger
+  #   git: 'https://github.com/stingergraph/stinger'
+  #   recursive-clone: true
+  #   configure:
+  #     - args:
+  #         - 'cmake'
+  #         - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #         - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #         - '-DCMAKE_BUILD_TYPE=Release'
+  #         - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['make']
+  # - name: Stinger_measurements
+  #   requires:
+  #     - Stinger
+  #     - dhb32
+  #     - gdsb
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+  #       - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '-DSTINGER_COMPILE_DIR=@COMPILE_DIR_FOR:Stinger@'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: nk_algos_vanilla
+  #   requires:
+  #     - networkit
+  #     - gdsb
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+  #       - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: nk_algos_dhb
+  #   requires:
+  #     - networkit_dhb
+  #     - gdsb
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-GNinja'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb64@/lib/cmake/dhb'
+  #       - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: aspen
+  #   git: https://github.com/hu-macsy/dhb-experiments.git
+  #   recursive-clone: true
+  #   compile:
+  #     - args:
+  #         - 'make'
+  #       workdir: '@THIS_CLONE_DIR@/code/'
+  #     - args: ['cp', '-r', '@THIS_SOURCE_DIR@/code/graph', '@THIS_SOURCE_DIR@/code/common', '@THIS_SOURCE_DIR@/code/algorithms', '@THIS_SOURCE_DIR@/code/pbbslib', '@THIS_SOURCE_DIR@/code/trees', '@THIS_SOURCE_DIR@/code/lib_extensions', '@THIS_SOURCE_DIR@/code/old', '@THIS_COMPILE_DIR@']
+  # - name: aspen_measurements
+  #   requires:
+  #     - aspen
+  #     - dhb32
+  #     - gdsb
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-v'
+  #       - '-GNinja'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+  #       - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '-DASPEN_COMPILE_DIR=@COMPILE_DIR_FOR:aspen@'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
+  # - name: terrace
+  #   git: https://github.com/hu-macsy/dhb-experiments.git
+  #   compile:
+  #     - args: ['rsync', '-a', '@THIS_SOURCE_DIR@/.', '@THIS_COMPILE_DIR@']
+  #     - args: ['make', 'OPENMP=1']
+  #   install:
+  #     - args: ['mkdir', '@THIS_PREFIX_DIR@/lib/']
+  #     - args: ['cp', '@THIS_COMPILE_DIR@/libterrace.so', '@THIS_PREFIX_DIR@/lib/']
+  #     - args: ['cp', '-r', '@THIS_COMPILE_DIR@/include', '@THIS_PREFIX_DIR@/']
+  # - name: terrace_measurements
+  #   requires:
+  #     - terrace
+  #     - dhb32
+  #     - cppexp
+  #   configure:
+  #     - args:
+  #       - 'cmake'
+  #       - '-v'
+  #       - '-GNinja'
+  #       - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
+  #       - '-Dcppexp_DIR=@PREFIX_DIR_FOR:cppexp@/lib/cmake/cppexp'
+  #       - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
+  #       - '-DCMAKE_BUILD_TYPE=Release'
+  #       - '-DTERRACE_PREFIX_DIR=@PREFIX_DIR_FOR:terrace@'
+  #       - '@THIS_SOURCE_DIR@'
+  #   compile:
+  #     - args: ['ninja']
+  #   install:
+  #     - args: ['ninja', 'install']
 
 revisions:
   - develop: true
