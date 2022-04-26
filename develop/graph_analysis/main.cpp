@@ -85,15 +85,17 @@ int main(int argc, char** argv) {
 
     std::mt19937 prng{42};
 
-    dhb::Edges edges = retrieve_edges(graph_path, temporal_graph, weighted_graph_file, prng);
+    unsigned int edge_count_in = 0;
 
-    unsigned int const edge_count_in = edges.size();
+    dhb::Matrix<dhb::EdgeData> matrix = [&]() {
+        dhb::Edges edges = retrieve_edges(graph_path, temporal_graph, weighted_graph_file, prng);
 
-    dhb::Matrix<dhb::Weight> matrix(dhb::graph::vertex_count(edges));
+        unsigned int const edge_count_in = edges.size();
 
-    for (const auto& e : edges) {
-        matrix.neighbors(e.source).insert(e.target.vertex, e.target.data.weight);
-    }
+        dhb::Matrix<dhb::EdgeData> matrix(std::move(edges));
+
+        return matrix;
+    }();
 
     unsigned int const edge_count_out = matrix.edges_count();
     unsigned int const vertex_count = matrix.vertices_count();
