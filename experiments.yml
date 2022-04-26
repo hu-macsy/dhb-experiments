@@ -259,6 +259,7 @@ builds:
 revisions:
   - develop: true
     build_version:
+      'graph_analysis': ''
       'dhb32': 'main'
       'dhb64': 'main'
       'dhb_exp': ''
@@ -670,7 +671,7 @@ experiments:
     timeout: 1800
     args: ['graph_analysis', '-e', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
     stdout: out
-    num_threads: 1
+    num_threads: 36
 
 variants:
   - axis: 'threads'
@@ -858,7 +859,7 @@ instances:
     set: [static, for_batchsize]
     items:
       - cit-Patents
-      - web-BerkStan
+      # - web-BerkStan
       - wiki-topcats
       - soc-LiveJournal1
       # The following graphs have been removed from our final experiments,
