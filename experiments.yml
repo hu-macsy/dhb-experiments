@@ -239,14 +239,14 @@ builds:
     requires:
       - terrace
       - dhb32
-      - cppexp
+      - gdsb
     configure:
       - args:
         - 'cmake'
         - '-v'
         - '-GNinja'
         - '-Ddhb_DIR=@PREFIX_DIR_FOR:dhb32@/lib/cmake/dhb'
-        - '-Dcppexp_DIR=@PREFIX_DIR_FOR:cppexp@/lib/cmake/cppexp'
+        - '-Dgdsb_DIR=@PREFIX_DIR_FOR:gdsb@/lib/cmake/gdsb'
         - '-DCMAKE_INSTALL_PREFIX=@THIS_PREFIX_DIR@'
         - '-DCMAKE_BUILD_TYPE=Release'
         - '-DTERRACE_PREFIX_DIR=@PREFIX_DIR_FOR:terrace@'
