@@ -665,6 +665,12 @@ experiments:
         '-r', 'insert_batch', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
     stdout: out
     num_threads: 36
+  - name: graph_analysis_exp
+    use_builds: [graph_analysis]
+    timeout: 1800
+    args: ['graph_analysis', '-e', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    stdout: out
+    num_threads: 1
 
 variants:
   - axis: 'threads'
@@ -815,6 +821,11 @@ matrix:
     - experiments: [nkv_spmv, nkdhb_spmv, csr_spmv, nkv_bfs, nkdhb_bfs, csr_bfs]
       instsets: [static]
       axes: []
+    
+    - experiments: 
+      - graph_analysis_exp
+      instsets: [static_big]
+      axes: []
 
 #    - experiments: [nkv_dyn_cc, nkdhb_dyn_cc, nkv_dyn_triangle, nkdhb_dyn_triangle]
 #      instsets: [temporal_u_v_t, temporal_u_v_w_t]
@@ -873,6 +884,12 @@ instances:
       - soc-twitter-mpi-sws
       - com-friendster
       #- web-ClueWeb09.edges
+  - repo: local
+    set: [static_big]
+    items:
+      - web-BerkStan
+      # - soc-twitter-mpi-sws
+      # - com-friendster
   - repo: local
     set: [generated]
     items:
