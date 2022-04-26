@@ -17,3 +17,6 @@ develop/aspen
 
 # ignore plots
 plots/*
+
+# launcher specification
+launchers.yml
