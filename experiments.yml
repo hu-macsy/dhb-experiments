@@ -669,7 +669,7 @@ experiments:
   - name: graph_analysis_exp
     use_builds: [graph_analysis]
     timeout: 1800
-    args: ['graph_analysis', '-e', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
+    args: ['graph_analysis', '-e', 'graph_analysis_exp', '@EXTRA_ARGS@', '-g', '@INSTANCE@']
     stdout: out
     num_threads: 36
 
