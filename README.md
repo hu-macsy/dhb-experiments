@@ -1,12 +1,10 @@
 # Introduction
 
-This is the application environment for DHB experiments. 
-To build all experiments you must install
-[Simexpal](https://github.com/hu-macsy/simexpal).
+This is the application environment for DHB experiments. To build all
+experiments you must install [Simexpal](https://github.com/hu-macsy/simexpal).
 
-For some of the defined experiments you will need some local 
-graph files to exist. Please add them to the `/instances`
-folder (or create symlinks).
+For some of the defined experiments you will need some local graph files to
+exist. Please add them to the `/instances` folder (or create symlinks).
 
 # Requirements
 
@@ -16,8 +14,8 @@ Building the `dhb_exp` target you require C++14, CMake and OpenMP.
 
 ## Python
 
-Install all requirements present in `requirements.txt`. To run the evaluation
-script.
+To run the evaluation script install all requirements present in
+`requirements.txt`. 
 
 ```
 $ pip3 install -r requirements.txt
