@@ -14,6 +14,9 @@ develop/Stinger
 develop/networkit_dhb
 develop/gdsb
 develop/aspen
+develop/Stinger@main
+develop/dhb32@main
+develop/gdsb@main
 
 # ignore plots
 plots/*
