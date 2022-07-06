@@ -17,7 +17,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: dhb32
-    git: https://github.com/hu-macsy/dhb.git
+    git: git@github.com:hu-macsy/dhb.git
     recursive-clone: true
     configure:
       - args:
@@ -35,7 +35,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: dhb64
-    git: https://github.com/hu-macsy/dhb.git
+    git: git@github.com:hu-macsy/dhb.git
     recursive-clone: true
     configure:
       - args:
@@ -53,7 +53,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: gdsb
-    git: https://github.com/hu-macsy/graph-ds-benchmark.git
+    git: git@github.com:hu-macsy/graph-ds-benchmark.git
     recursive-clone: true
     configure:
       - args:
@@ -100,7 +100,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: networkit_dhb
-    git: https://github.com/hu-macsy/dhb-experiments.git
+    git: git@github.com:hu-macsy/dhb-experiments.git
     recursive-clone: true
     requires:
       - dhb64
@@ -134,7 +134,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: Stinger
-    git: 'https://github.com/stingergraph/stinger'
+    git: git@github.com:stingergraph/stinger.git
     recursive-clone: true
     configure:
       - args:
@@ -199,7 +199,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: aspen
-    git: https://github.com/hu-macsy/dhb-experiments.git
+    git: git@github.com:hu-macsy/dhb-experiments.git
     recursive-clone: true
     compile:
       - args:
@@ -227,7 +227,7 @@ builds:
     install:
       - args: ['ninja', 'install']
   - name: terrace
-    git: https://github.com/hu-macsy/dhb-experiments.git
+    git: git@github.com:hu-macsy/dhb-experiments.git
     compile:
       - args: ['rsync', '-a', '@THIS_SOURCE_DIR@/.', '@THIS_COMPILE_DIR@']
       - args: ['make', 'OPENMP=1']
