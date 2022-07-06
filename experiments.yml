@@ -204,7 +204,7 @@ builds:
     compile:
       - args:
           - 'make'
-        workdir: '@THIS_CLONE_DIR@/code/'
+        workdir: '@THIS_SOURCE_DIR@/code/'
       - args: ['cp', '-r', '@THIS_SOURCE_DIR@/code/graph', '@THIS_SOURCE_DIR@/code/common', '@THIS_SOURCE_DIR@/code/algorithms', '@THIS_SOURCE_DIR@/code/pbbslib', '@THIS_SOURCE_DIR@/code/trees', '@THIS_SOURCE_DIR@/code/lib_extensions', '@THIS_SOURCE_DIR@/code/old', '@THIS_COMPILE_DIR@']
   - name: aspen_measurements
     requires:
@@ -257,7 +257,12 @@ builds:
       - args: ['ninja', 'install']
 
 revisions:
-  - develop: true
+  - name: aspen_rev
+    develop: false
+    build_version:
+      'aspen': 'codebase_aspen'
+  - name: main
+    develop: true
     build_version:
       'graph_analysis': ''
       'dhb32': 'main'
@@ -271,7 +276,6 @@ revisions:
       'Stinger_measurements': ''
       'nk_algos_vanilla': ''
       'nk_algos_dhb': ''
-      'aspen': 'codebase_aspen'
       'aspen_measurements': ''
       'terrace': 'codebase_terrace'
       'terrace_measurements': ''
