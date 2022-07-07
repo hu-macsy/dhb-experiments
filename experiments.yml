@@ -3,6 +3,8 @@ builds:
     requires:
       - dhb32
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -71,6 +73,8 @@ builds:
     requires:
       - dhb32
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -123,6 +127,8 @@ builds:
   - name: nk_measurements
     requires:
       - networkit
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -153,6 +159,8 @@ builds:
       - Stinger
       - dhb32
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -171,6 +179,8 @@ builds:
     requires:
       - networkit
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -189,7 +199,7 @@ builds:
       - networkit_dhb
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'main']
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -218,6 +228,8 @@ builds:
       - aspen
       - dhb32
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
@@ -249,6 +261,8 @@ builds:
       - terrace
       - dhb32
       - gdsb
+    regenerate:
+      - args: ['git', 'checkout', 'fix_build']
     configure:
       - args:
         - 'cmake'
