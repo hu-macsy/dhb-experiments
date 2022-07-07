@@ -1,6 +1,6 @@
 #include <dhb/graph.h>
 
-#include <gdsberiment.h>
+#include <gdsb/experiment.h>
 #include <gdsb/graph_io.h>
 #include <gdsb/timer.h>
 
