@@ -12,7 +12,7 @@ find_package(OpenMP REQUIRED)
 target_link_libraries(nk_algos PRIVATE OpenMP::OpenMP_CXX)
 target_link_libraries(nk_algos PRIVATE stdc++fs)
 
-find_package(gdsbUIRED)
+find_package(gdsb REQUIRED)
 target_link_libraries(nk_algos PRIVATE gdsb::gdsb)
 
 include(FindPkgConfig REQUIRED)
