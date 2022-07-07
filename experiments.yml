@@ -4,7 +4,7 @@ builds:
       - dhb32
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -74,7 +74,7 @@ builds:
       - dhb32
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -128,7 +128,7 @@ builds:
     requires:
       - networkit
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -160,7 +160,7 @@ builds:
       - dhb32
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -180,7 +180,7 @@ builds:
       - networkit
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -199,7 +199,7 @@ builds:
       - networkit_dhb
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -229,7 +229,7 @@ builds:
       - dhb32
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -262,7 +262,7 @@ builds:
       - dhb32
       - gdsb
     regenerate:
-      - args: ['git', 'checkout', 'fix_build']
+      - args: ['git', 'checkout', 'main']
     configure:
       - args:
         - 'cmake'
@@ -280,10 +280,6 @@ builds:
       - args: ['ninja', 'install']
 
 revisions:
-  # - name: rev
-  #   develop: false
-  #   build_version:
-  # - name: main
   - develop: true
     build_version:
       'aspen': 'codebase_aspen'
