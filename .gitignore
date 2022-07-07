@@ -5,6 +5,7 @@ status.cache
 /output/*
 validation.cache
 /instances/*
+regenerated.simexpal
 
 # ignore checkout of networkit
 develop/dhb32
