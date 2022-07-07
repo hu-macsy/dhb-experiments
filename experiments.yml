@@ -257,28 +257,28 @@ builds:
       - args: ['ninja', 'install']
 
 revisions:
-  - name: aspen_rev
+  - name: rev
     develop: false
     build_version:
       'aspen': 'codebase_aspen'
+      'networkit_dhb': 'codebase_networkit_dhb'
+      'terrace': 'codebase_terrace'
   - name: main
     develop: true
     build_version:
-      'graph_analysis': ''
+      'graph_analysis': 'main'
       'dhb32': 'main'
       'dhb64': 'main'
-      'dhb_exp': ''
+      'dhb_exp': 'main'
       'gdsb': 'main'
       'networkit': 'master'
-      'networkit_dhb': 'codebase_networkit_dhb'
-      'nk_measurements': ''
+      'nk_measurements': 'main'
       'Stinger': 'master'
-      'Stinger_measurements': ''
-      'nk_algos_vanilla': ''
-      'nk_algos_dhb': ''
-      'aspen_measurements': ''
-      'terrace': 'codebase_terrace'
-      'terrace_measurements': ''
+      'Stinger_measurements': 'main'
+      'nk_algos_vanilla': 'main'
+      'nk_algos_dhb': 'main'
+      'aspen_measurements': 'main'
+      'terrace_measurements': 'main'
 
 experiments:
   - name: dhb_random_insertions
